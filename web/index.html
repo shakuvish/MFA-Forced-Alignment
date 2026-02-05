@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFA Forced Alignment - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .demo-section {
+            grid-column: 1 / -1;
+        }
+
+        .audio-player {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .waveform {
+            width: 100%;
+            height: 128px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .alignment-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .word-item {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .word-item:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .word-text {
+            font-weight: bold;
+            display: block;
+        }
+
+        .word-time {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .word-item:hover .word-time {
+            color: white;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .comparison-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .comparison-item h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .oov-list {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .oov-list h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .oov-word {
+            display: inline-block;
+            background: white;
+            padding: 5px 12px;
+            margin: 3px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .phonetic {
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            background: #e7e9fc;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -38px;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+        }
+
+        .github-link {
+            text-align: center;
+            margin-top: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+        }
+
+        .github-link a {
+            display: inline-block;
+            background: #24292e;
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .github-link a:hover {
+            background: #0366d6;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(3, 102, 214, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .main-content, .comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .file-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .file-btn {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #667eea;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .pronunciation-card {
+            background: #e7f3ff;
+            border-left: 4px solid #0366d6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .pronunciation-card .word {
+            font-weight: bold;
+            color: #0366d6;
+            font-size: 1.1em;
+        }
+
+        .pronunciation-card .phones {
+            color: #666;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Montreal Forced Aligner</h1>
+            <p class="subtitle">Interactive Demonstration of Speech-to-Text Alignment with OOV Handling</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number">6</span>
+                <span class="stat-label">Audio Files Aligned</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">97.2s</span>
+                <span class="stat-label">Total Duration</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">22</span>
+                <span class="stat-label">OOV Words Identified</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">100%</span>
+                <span class="stat-label">Alignment Success Rate</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>📊 Project Overview</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>1. Environment Setup</strong>
+                        <p>Installed MFA and acoustic models using Conda</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>2. Data Preparation</strong>
+                        <p>Organized 6 audio-transcript pairs</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>3. Initial Alignment</strong>
+                        <p>Generated word and phone-level TextGrids</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>4. OOV Detection</strong>
+                        <p>Identified 22 out-of-vocabulary words</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>5. Custom Dictionary</strong>
+                        <p>Created phonetic pronunciations in ARPA format</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>6. Re-alignment</strong>
+                        <p>Applied custom dictionary and compared results</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔤 OOV Words Handled</h2>
+                <div class="oov-list">
+                    <h4>Identified Out-of-Vocabulary Words:</h4>
+                    <span class="oov-word">HENNESSY</span>
+                    <span class="oov-word">DUKAKIS</span>
+                    <span class="oov-word">MELNICOVE</span>
+                    <span class="oov-word">MAFFY</span>
+                    <span class="oov-word">WBUR</span>
+                    <span class="oov-word">DEPOLITICIZE</span>
+                    <span class="oov-word">SJC</span>
+                    <span class="oov-word">JUDGESHIPS</span>
+                    <span class="oov-word">CRUMBLING</span>
+                </div>
+
+                <h4 style="margin-top: 20px; color: #667eea;">Custom Pronunciations Created:</h4>
+                
+                <div class="pronunciation-card">
+                    <div class="word">HENNESSY</div>
+                    <div class="phones">HH EH1 N AH0 S IY0</div>
+                </div>
+
+                <div class="pronunciation-card">
+                    <div class="word">DUKAKIS</div>
+                    <div class="phones">D UW0 K AA1 K IH0 S</div>
+                </div>
+
+                <div class="pronunciation-card">
+                    <div class="word">MELNICOVE</div>
+                    <div class="phones">M EH1 L N IH0 K OW0 V</div>
+                </div>
+
+                <div class="pronunciation-card">
+                    <div class="word">WBUR</div>
+                    <div class="phones">D AH1 B AH0 L Y UW0 B IY1 Y UW0 AA1 R</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card demo-section">
+            <h2>🎵 Interactive Demo - Sample Alignment</h2>
+            
+            <div class="file-selector">
+                <button class="file-btn active" onclick="selectFile('F2BJRLP1')">F2BJRLP1 (News Broadcast)</button>
+                <button class="file-btn" onclick="selectFile('F2BJRLP2')">F2BJRLP2 (News Broadcast)</button>
+                <button class="file-btn" onclick="selectFile('ISLE_01')">ISLE_01 (Speech Test)</button>
+            </div>
+
+            <div class="audio-player">
+                <div id="waveform" class="waveform">
+                    <div style="text-align: center; padding-top: 50px; color: #666;">
+                        📊 Audio waveform visualization would appear here<br>
+                        <small>(Requires WaveSurfer.js library)</small>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button onclick="playDemo()">▶️ Play Demo</button>
+                    <button onclick="pauseDemo()">⏸️ Pause</button>
+                    <button onclick="stopDemo()">⏹️ Stop</button>
+                </div>
+            </div>
+
+            <h3 style="color: #667eea; margin-top: 30px;">📝 Sample Transcript (F2BJRLP1):</h3>
+            <p style="background: #f8f9fa; padding: 20px; border-radius: 10px; line-height: 1.8;">
+                "Wanted: Chief Justice of the Massachusetts Supreme Court. In April, the S.J.C.'s current leader 
+                <span class="phonetic">Edward Hennessy</span> reaches the mandatory retirement age of seventy, 
+                and a successor is expected to be named in March. It may be the most important appointment 
+                Governor <span class="phonetic">Michael Dukakis</span> makes during the remainder of his administration..."
+            </p>
+
+            <h3 style="color: #667eea; margin-top: 30px;">⏱️ Word-Level Alignment (Sample):</h3>
+            <div class="alignment-display">
+                <div class="word-item">
+                    <span class="word-text">wanted</span>
+                    <span class="word-time">0.00-0.45s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">chief</span>
+                    <span class="word-time">0.45-0.75s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">justice</span>
+                    <span class="word-time">0.75-1.20s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">of</span>
+                    <span class="word-time">1.20-1.30s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">the</span>
+                    <span class="word-time">1.30-1.40s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">massachusetts</span>
+                    <span class="word-time">1.40-2.15s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">supreme</span>
+                    <span class="word-time">2.15-2.55s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">court</span>
+                    <span class="word-time">2.55-2.95s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">hennessy</span>
+                    <span class="word-time">7.20-7.75s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">dukakis</span>
+                    <span class="word-time">15.45-16.05s</span>
+                </div>
+                <div class="word-item">
+                    <span class="word-text">melnicove</span>
+                    <span class="word-time">22.10-22.70s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card demo-section">
+            <h2>📈 Before vs After OOV Handling</h2>
+            <div class="comparison">
+                <div class="comparison-item">
+                    <h3>❌ Before (Base Dictionary)</h3>
+                    <div style="margin: 15px 0;">
+                        <span class="badge badge-warning">22 OOV Words Detected</span>
+                        <span class="badge badge-info">Base Dictionary Only</span>
+                    </div>
+                    <p style="color: #666; margin: 15px 0;">
+                        Initial alignment using only the pre-trained english_us_arpa dictionary. 
+                        Validation identified 22 word types (48 tokens) as out-of-vocabulary.
+                    </p>
+                    <ul style="margin-left: 20px; color: #666;">
+                        <li>Proper names may use fallback pronunciation</li>
+                        <li>Potential alignment inaccuracies</li>
+                        <li>Limited vocabulary coverage</li>
+                    </ul>
+                </div>
+                <div class="comparison-item">
+                    <h3>✅ After (Custom Dictionary)</h3>
+                    <div style="margin: 15px 0;">
+                        <span class="badge badge-success">OOV Words Handled</span>
+                        <span class="badge badge-info">Custom Pronunciations</span>
+                    </div>
+                    <p style="color: #666; margin: 15px 0;">
+                        Re-alignment with custom dictionary containing ARPA phonetic 
+                        transcriptions for all identified OOV words.
+                    </p>
+                    <ul style="margin-left: 20px; color: #666;">
+                        <li>Accurate pronunciations for proper names</li>
+                        <li>Enhanced alignment quality</li>
+                        <li>Complete vocabulary coverage</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card demo-section">
+            <h2>🎯 Key Findings & Results</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="background: #e7f3ff; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #0366d6; margin-bottom: 10px;">✓ Successful Alignment</h4>
+                    <p>All 6 audio files successfully aligned with corresponding transcripts</p>
+                </div>
+                <div style="background: #f0fff4; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #28a745; margin-bottom: 10px;">✓ OOV Workflow</h4>
+                    <p>Complete OOV detection and handling pipeline demonstrated</p>
+                </div>
+                <div style="background: #fff3cd; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #856404; margin-bottom: 10px;">✓ Quality Metrics</h4>
+                    <p>Alignment quality analyzed using log likelihood and SNR measurements</p>
+                </div>
+                <div style="background: #f8d7da; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #721c24; margin-bottom: 10px;">✓ Documentation</h4>
+                    <p>Comprehensive report with technical analysis and comparisons</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="github-link">
+            <h2 style="color: #667eea; margin-bottom: 20px;">📂 View Full Project on GitHub</h2>
+            <p style="color: #666; margin-bottom: 20px;">
+                Complete source code, documentation, and all alignment outputs available in the repository
+            </p>
+            <a href="https://github.com/shakuvish/MFA-Forced-Alignment" target="_blank">
+                🔗 Open GitHub Repository
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function selectFile(filename) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.file-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            console.log('Selected file:', filename);
+            // In a full implementation, this would load the actual audio file
+        }
+
+        function playDemo() {
+            alert('Demo: In a full implementation, this would play the selected audio file with synchronized word highlighting');
+        }
+
+        function pauseDemo() {
+            console.log('Pause demo');
+        }
+
+        function stopDemo() {
+            console.log('Stop demo');
+        }
+
+        // Add hover effect to word items
+        document.querySelectorAll('.word-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const time = this.querySelector('.word-time').textContent;
+                alert(`Would seek to timestamp: ${time}`);
+            });
+        });
+    </script>
+</body>
+</html>
