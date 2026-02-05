@@ -1,4 +1,4 @@
-# Montreal Forced Aligner - Assignment
+# Montreal Forced Aligner
 
 ## Project Overview
 This project demonstrates forced alignment of speech audio with text transcriptions using the Montreal Forced Aligner (MFA), including handling of Out-of-Vocabulary (OOV) words.
