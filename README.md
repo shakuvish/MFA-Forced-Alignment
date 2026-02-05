@@ -1,226 +1,119 @@
-\# Montreal Forced Aligner - Assignment
+# Montreal Forced Aligner - Assignment
 
-
-
-\## Project Overview
-
+## Project Overview
 This project demonstrates forced alignment of speech audio with text transcriptions using the Montreal Forced Aligner (MFA), including handling of Out-of-Vocabulary (OOV) words.
 
+## Dataset
+- Audio files: 6 WAV files (3 from F2BJRLP dataset, 3 from ISLE dataset)
+- Transcripts: Corresponding text transcriptions
+- Total duration: 97.16 seconds
 
+## Installation & Setup
 
-\## Dataset
+### Prerequisites
+- Windows 10/11
+- Miniconda3
 
-\- \*\*Audio files:\*\* 6 WAV files (3 from F2BJRLP dataset, 3 from ISLE dataset)
+### Step 1: Install Miniconda
+1. Download from https://docs.conda.io/en/latest/miniconda.html
+2. Install with default settings
+3. Restart terminal
 
-\- \*\*Transcripts:\*\* Corresponding text transcriptions
-
-\- \*\*Total duration:\*\* 97.16 seconds
-
-
-
-\## Installation \& Setup
-
-
-
-\### Prerequisites
-
-\- Windows 10/11
-
-\- Miniconda3
-
-
-
-\### Step 1: Install Miniconda
-
-1\. Download from https://docs.conda.io/en/latest/miniconda.html
-
-2\. Install with default settings
-
-3\. Restart terminal
-
-
-
-\### Step 2: Install Montreal Forced Aligner
-
+### Step 2: Install Montreal Forced Aligner
 ```bash
-
-\# Create conda environment
-
+# Create conda environment
 conda create -n aligner -c conda-forge montreal-forced-aligner
-
-
-
-\# Activate environment
-
+# Activate environment
 conda activate aligner
-
-
-
-\# Verify installation
-
+# Verify installation
 mfa version
-
 ```
 
-
-
-\### Step 3: Download Models
-
+### Step 3: Download Models
 ```bash
-
-\# Download acoustic model
-
-mfa model download acoustic english\_us\_arpa
-
-
-
-\# Download dictionary
-
-mfa model download dictionary english\_us\_arpa
-
-
-
-\# Download G2P model (for OOV handling)
-
-mfa model download g2p english\_us\_arpa
-
+# Download acoustic model
+mfa model download acoustic english_us_arpa
+# Download dictionary
+mfa model download dictionary english_us_arpa
+# Download G2P model (for OOV handling)
+mfa model download g2p english_us_arpa
 ```
 
-
-
-\## Project Structure
-
+## Project Structure
 ```
-
 MFA-Forced-Alignment-Assignment/
-
-├── audio/                      # Audio files (.wav)
-
-├── transcripts/                # Text transcriptions (.txt)
-
-├── output\_before\_oov/          # TextGrids before OOV handling
-
-├── output\_after\_oov/           # TextGrids after OOV handling
-
-├── dictionary/                 # Custom pronunciation dictionary
-
-├── screenshots/                # Praat visualization screenshots
-
-├── docs/                       # Documentation
-
-├── README.md                   # This file
-
-└── REPORT.md                   # Detailed analysis report
-
+├── audio/                  # Original .wav files
+├── transcripts/            # Original .txt transcription files
+├── corpus/                 # Paired audio + text files (created during usage)
+├── dictionary/             # Custom pronunciation dictionary files
+├── output_before_oov/      # TextGrid files (initial alignment)
+├── output_after_oov/       # TextGrid files (after OOV handling)
+├── screenshots/            # Praat visualization screenshots
+├── docs/                   # Additional documentation
+├── REPORT.md               # Detailed analysis and observations
+└── README.md               # This file
 ```
 
+## Usage
 
-
-\## Usage
-
-
-
-\### Step 1: Prepare Data
-
-Organize files with matching names:
-
-```
-
-corpus/
-
-├── filename1.wav
-
-├── filename1.txt
-
-├── filename2.wav
-
-├── filename2.txt
-
-...
-
-```
-
-
-
-\### Step 2: Run Initial Alignment
+### Step 1: Prepare the Corpus Directory
+MFA requires audio and transcription files to share the same base name in a single directory.
 
 ```bash
-
-mfa align corpus english\_us\_arpa english\_us\_arpa output --clean
-
+mkdir corpus
+cp audio/*.wav corpus/
+cp transcripts/*.txt corpus/
 ```
 
-
-
-\### Step 3: Validate \& Identify OOV Words
-
+### Step 2: Initial Alignment
 ```bash
-
-mfa validate corpus english\_us\_arpa english\_us\_arpa --ignore\_acoustics
-
+mfa align corpus/ english_us_arpa english_us_arpa output_before_oov/ --clean
 ```
 
-
-
-\### Step 4: Handle OOV Words
-
-Create custom dictionary with pronunciations for OOV words, then:
-
+### Step 3: Validate & Identify OOV Words
 ```bash
-
-mfa align corpus english\_us\_arpa english\_us\_arpa output\_with\_oov --clean --custom\_mapping\_path custom\_dict.txt
-
+mfa validate corpus/ english_us_arpa english_us_arpa --ignore_acoustics
 ```
+This command produces logs including oovs_found.txt with all OOV words and their counts.
 
+### Step 4: Handle OOV Words with Custom Dictionary
+1. Save the base dictionary locally:
+   ```bash
+   mfa model save dictionary english_us_arpa dictionary/base_dict.txt
+   ```
 
+2. Create custom dictionary:
+   ```bash
+   cp dictionary/base_dict.txt dictionary/custom_dict.txt
+   ```
+   Edit custom_dict.txt and add manual pronunciations for OOV words in ARPABET format.
 
-\## Results
+3. Re-run alignment with custom dictionary:
+   ```bash
+   mfa align corpus/ dictionary/custom_dict.txt english_us_arpa output_after_oov/ --clean
+   ```
 
-\- Initial alignment: 6 TextGrid files generated
+## Results
+- Initial alignment: 6 TextGrid files generated in output_before_oov/
+- OOV words identified: 22 unique types (48 total tokens)
+- Custom dictionary created with phonetic pronunciations for all OOV items
+- Final alignment completed with improved TextGrids in output_after_oov/
 
-\- OOV words identified: 22 word types (48 tokens)
-
-\- Custom dictionary created with phonetic pronunciations
-
-\- Re-alignment completed with custom dictionary
-
-
-
-\## Visualization
-
+## Visualization
 TextGrid files can be opened in Praat for visualization:
+1. Download Praat: https://www.fon.hum.uva.nl/praat/
+2. Open the corresponding .wav file and .TextGrid file
+3. Select both objects and click View & Edit
 
-1\. Download Praat: https://www.fon.hum.uva.nl/praat/
+Screenshots of before/after OOV handling comparisons are stored in the screenshots/ folder.
 
-2\. Open TextGrid file + corresponding WAV file
+## Key Observations
+- Alignment accuracy improved significantly after adding custom pronunciations
+- Most OOV issues were caused by proper names and non-standard terms
+- Detailed analysis and metrics are provided in REPORT.md
 
-3\. Select both → View \& Edit
+## Author
+Shashank Vishwakarma
 
-
-
-\## Key Observations
-
-\- See `REPORT.md` for detailed analysis
-
-\- Comparison of before/after OOV handling
-
-\- Alignment quality metrics
-
-
-
-\## Author
-
-\[Your Name]
-
-
-
-\## Date
-
+## Date
 February 2026
-
-
-
-\## License
-
-Educational project for academic purposes
-
