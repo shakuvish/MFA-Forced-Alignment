@@ -1,0 +1,52 @@
+MFA FORCED ALIGNMENT - ASSIGNMENT SUBMISSION
+============================================
+
+Student: Shashank Vishwakarma
+Date: February 6, 2026
+Assignment: Forced Alignment using Montreal Forced Aligner
+
+GITHUB REPOSITORY:
+https://github.com/shakuvish/MFA-Forced-Alignment
+
+CONTENTS:
+✅ Complete source code and data
+✅ README.md with installation and usage instructions
+✅ REPORT.md with detailed analysis and findings
+✅ Audio files (6 WAV files)
+✅ Transcripts (6 TXT files)
+✅ Output TextGrids (before OOV handling)
+✅ Output TextGrids (after OOV handling)
+✅ Custom pronunciation dictionary
+✅ Praat screenshots
+✅ Installation guide
+
+DELIVERABLES COMPLETED:
+✅ MFA environment setup
+✅ Data preparation (6 audio-transcript pairs)
+✅ Initial forced alignment
+✅ OOV word identification (22 types, 48 tokens)
+✅ Custom dictionary creation using ARPA phonetic notation
+✅ Re-alignment with custom dictionary
+✅ Before/after comparison and analysis
+✅ Praat visualization
+✅ Complete documentation
+
+KEY FINDINGS:
+- Successfully aligned 97.16 seconds of audio
+- Identified and handled 22 OOV word types
+- Created phonetic pronunciations for proper names (Hennessy, Dukakis, Melnicove, etc.)
+- Documented complete OOV handling workflow
+- Generated high-quality word and phone-level alignments
+
+TECHNICAL SKILLS DEMONSTRATED:
+- Conda environment management
+- MFA command-line usage
+- Phonetic transcription (ARPA notation)
+- Data organization and file management
+- Git/GitHub version control
+- Technical documentation
+- Quality analysis and comparison
+
+REPOSITORY ACCESS:
+The repository is PUBLIC and accessible for evaluation at:
+https://github.com/shakuvish/MFA-Forced-Alignment
