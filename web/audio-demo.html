@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFA Audio Demo - Interactive Playback</title>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .player-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .file-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .file-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .file-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .file-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        #waveform {
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .control-btn {
+            padding: 12px 30px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .speed-btn {
+            padding: 5px 15px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .speed-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .transcript-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .transcript-text {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+
+        .word-alignment {
+            margin-top: 20px;
+        }
+
+        .word-item {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .word-item:hover {
+            background: #e7e9fc;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .word-item.playing {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .word-text {
+            font-weight: bold;
+            display: block;
+        }
+
+        .word-time {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .word-item.playing .word-time {
+            color: white;
+        }
+
+        .info-panel {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #0366d6;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .back-link a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .phoneme-tier {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .phoneme-item {
+            display: inline-block;
+            margin: 3px;
+            padding: 5px 10px;
+            background: #fff3cd;
+            border-radius: 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .phoneme-item:hover {
+            background: #ffc107;
+        }
+
+        .phoneme-item.playing {
+            background: #ff9800;
+            color: white;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #e0e0e0;
+            cursor: pointer;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Interactive Audio Alignment Demo</h1>
+            <p>Click on words to jump to that timestamp • Click Play to hear the audio</p>
+        </header>
+
+        <div class="player-card">
+            <h2>Select Audio File</h2>
+            <div class="file-selector">
+                <button class="file-btn active" onclick="loadFile('ISLE_01')">ISLE_01 - "I said white not bait"</button>
+                <button class="file-btn" onclick="loadFile('ISLE_02')">ISLE_02 - "I said new not no"</button>
+                <button class="file-btn" onclick="loadFile('ISLE_03')">ISLE_03 - "I said bad not bed"</button>
+            </div>
+
+            <div class="info-panel">
+                <strong>📁 Current File:</strong> <span id="current-file">ISLE_SESS0131_BLOCKD02_01_sprt1.wav</span><br>
+                <strong>⏱️ Duration:</strong> <span id="duration">4.13 seconds</span><br>
+                <strong>📝 Words:</strong> <span id="word-count">6 words</span>
+            </div>
+
+            <div id="waveform"></div>
+
+            <div class="progress-info">
+                <span>Current Time: <strong id="current-time">0:00</strong></span>
+                <span>Total: <strong id="total-time">0:00</strong></span>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="play-btn" onclick="playPause()">▶️ Play</button>
+                <button class="control-btn" onclick="stop()">⏹️ Stop</button>
+                <button class="control-btn" onclick="skipBackward()">⏪ -2s</button>
+                <button class="control-btn" onclick="skipForward()">⏩ +2s</button>
+            </div>
+
+            <div class="speed-control">
+                <span>Playback Speed:</span>
+                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x</button>
+                <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                <button class="speed-btn active" onclick="setSpeed(1)">1x</button>
+                <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x</button>
+            </div>
+        </div>
+
+        <div class="transcript-section">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('words')">Words</button>
+                <button class="tab-btn" onclick="switchTab('phonemes')">Phonemes</button>
+                <button class="tab-btn" onclick="switchTab('transcript')">Full Transcript</button>
+            </div>
+
+            <div id="words-tab" class="tab-content active">
+                <h2>Word-Level Alignment</h2>
+                <p style="color: #666; margin-bottom: 15px;">Click any word to jump to that timestamp in the audio</p>
+                <div class="word-alignment" id="word-alignment">
+                    <!-- Words will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div id="phonemes-tab" class="tab-content">
+                <h2>Phoneme-Level Alignment</h2>
+                <p style="color: #666; margin-bottom: 15px;">Individual speech sounds (phonemes) with timestamps</p>
+                <div class="phoneme-tier" id="phoneme-alignment">
+                    <!-- Phonemes will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div id="transcript-tab" class="tab-content">
+                <h2>Full Transcript</h2>
+                <div class="transcript-text" id="transcript-text">
+                    <!-- Transcript will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← Back to Main Demo</a>
+        </div>
+    </div>
+
+    <script>
+        // Sample alignment data (in a real implementation, this would be parsed from TextGrid files)
+        const alignmentData = {
+            'ISLE_01': {
+                filename: 'ISLE_SESS0131_BLOCKD02_01_sprt1.wav',
+                duration: 4.125,
+                transcript: 'I SAID WHITE NOT BAIT',
+                words: [
+                    { text: 'I', start: 0.56, end: 0.67 },
+                    { text: 'SAID', start: 0.67, end: 0.96 },
+                    { text: 'WHITE', start: 0.96, end: 1.42 },
+                    { text: 'NOT', start: 1.42, end: 1.71 },
+                    { text: 'BAIT', start: 1.71, end: 2.15 }
+                ],
+                phonemes: [
+                    { phone: 'AY', start: 0.56, end: 0.67 },
+                    { phone: 'S', start: 0.67, end: 0.75 },
+                    { phone: 'EH', start: 0.75, end: 0.84 },
+                    { phone: 'D', start: 0.84, end: 0.96 },
+                    { phone: 'W', start: 0.96, end: 1.04 },
+                    { phone: 'AY', start: 1.04, end: 1.24 },
+                    { phone: 'T', start: 1.24, end: 1.42 },
+                    { phone: 'N', start: 1.42, end: 1.52 },
+                    { phone: 'AA', start: 1.52, end: 1.64 },
+                    { phone: 'T', start: 1.64, end: 1.71 },
+                    { phone: 'B', start: 1.71, end: 1.79 },
+                    { phone: 'EY', start: 1.79, end: 2.03 },
+                    { phone: 'T', start: 2.03, end: 2.15 }
+                ]
+            },
+            'ISLE_02': {
+                filename: 'ISLE_SESS0131_BLOCKD02_02_sprt1.wav',
+                duration: 3.875,
+                transcript: 'I SAID NEW NOT NO',
+                words: [
+                    { text: 'I', start: 0.53, end: 0.64 },
+                    { text: 'SAID', start: 0.64, end: 0.92 },
+                    { text: 'NEW', start: 0.92, end: 1.28 },
+                    { text: 'NOT', start: 1.28, end: 1.56 },
+                    { text: 'NO', start: 1.56, end: 1.95 }
+                ],
+                phonemes: [
+                    { phone: 'AY', start: 0.53, end: 0.64 },
+                    { phone: 'S', start: 0.64, end: 0.72 },
+                    { phone: 'EH', start: 0.72, end: 0.82 },
+                    { phone: 'D', start: 0.82, end: 0.92 },
+                    { phone: 'N', start: 0.92, end: 1.00 },
+                    { phone: 'UW', start: 1.00, end: 1.28 },
+                    { phone: 'N', start: 1.28, end: 1.38 },
+                    { phone: 'AA', start: 1.38, end: 1.50 },
+                    { phone: 'T', start: 1.50, end: 1.56 },
+                    { phone: 'N', start: 1.56, end: 1.70 },
+                    { phone: 'OW', start: 1.70, end: 1.95 }
+                ]
+            },
+            'ISLE_03': {
+                filename: 'ISLE_SESS0131_BLOCKD02_03_sprt1.wav',
+                duration: 4.5,
+                transcript: 'I SAID BAD NOT BED',
+                words: [
+                    { text: 'I', start: 0.58, end: 0.71 },
+                    { text: 'SAID', start: 0.71, end: 1.02 },
+                    { text: 'BAD', start: 1.02, end: 1.45 },
+                    { text: 'NOT', start: 1.45, end: 1.75 },
+                    { text: 'BED', start: 1.75, end: 2.18 }
+                ],
+                phonemes: [
+                    { phone: 'AY', start: 0.58, end: 0.71 },
+                    { phone: 'S', start: 0.71, end: 0.80 },
+                    { phone: 'EH', start: 0.80, end: 0.91 },
+                    { phone: 'D', start: 0.91, end: 1.02 },
+                    { phone: 'B', start: 1.02, end: 1.12 },
+                    { phone: 'AE', start: 1.12, end: 1.32 },
+                    { phone: 'D', start: 1.32, end: 1.45 },
+                    { phone: 'N', start: 1.45, end: 1.55 },
+                    { phone: 'AA', start: 1.55, end: 1.68 },
+                    { phone: 'T', start: 1.68, end: 1.75 },
+                    { phone: 'B', start: 1.75, end: 1.85 },
+                    { phone: 'EH', start: 1.85, end: 2.06 },
+                    { phone: 'D', start: 2.06, end: 2.18 }
+                ]
+            }
+        };
+
+        let wavesurfer = null;
+        let currentFile = 'ISLE_01';
+        let isPlaying = false;
+
+        // Initialize WaveSurfer
+        function initWaveSurfer() {
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#667eea',
+                progressColor: '#764ba2',
+                cursorColor: '#ff6b6b',
+                barWidth: 3,
+                barRadius: 3,
+                cursorWidth: 2,
+                height: 128,
+                barGap: 2,
+                responsive: true,
+                normalize: true
+            });
+
+            // Update time display
+            wavesurfer.on('audioprocess', function() {
+                updateTimeDisplay();
+                highlightCurrentWord();
+            });
+
+            wavesurfer.on('ready', function() {
+                document.getElementById('total-time').textContent = formatTime(wavesurfer.getDuration());
+            });
+
+            wavesurfer.on('finish', function() {
+                isPlaying = false;
+                document.getElementById('play-btn').innerHTML = '▶️ Play';
+                clearWordHighlights();
+            });
+
+            // Load initial file (simulated - in real implementation would load actual audio)
+            loadAudioFile(currentFile);
+        }
+
+        function loadAudioFile(fileKey) {
+            // In a real implementation, this would load the actual audio file
+            // For demo purposes, we'll create a simple tone
+            const data = alignmentData[fileKey];
+            
+            // Create a simple audio buffer for demonstration
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const duration = data.duration;
+            const sampleRate = audioContext.sampleRate;
+            const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+            const channelData = buffer.getChannelData(0);
+            
+            // Generate a simple tone (this is just for demonstration)
+            for (let i = 0; i < channelData.length; i++) {
+                channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1;
+            }
+            
+            wavesurfer.loadDecodedBuffer(buffer);
+            
+            updateFileInfo(fileKey);
+            populateWordAlignment(fileKey);
+            populatePhonemeAlignment(fileKey);
+            populateTranscript(fileKey);
+        }
+
+        function loadFile(fileKey) {
+            // Update button states
+            document.querySelectorAll('.file-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentFile = fileKey;
+            stop();
+            loadAudioFile(fileKey);
+        }
+
+        function updateFileInfo(fileKey) {
+            const data = alignmentData[fileKey];
+            document.getElementById('current-file').textContent = data.filename;
+            document.getElementById('duration').textContent = data.duration.toFixed(2) + ' seconds';
+            document.getElementById('word-count').textContent = data.words.length + ' words';
+        }
+
+        function populateWordAlignment(fileKey) {
+            const data = alignmentData[fileKey];
+            const container = document.getElementById('word-alignment');
+            container.innerHTML = '';
+            
+            data.words.forEach((word, index) => {
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'word-item';
+                wordDiv.setAttribute('data-start', word.start);
+                wordDiv.setAttribute('data-end', word.end);
+                wordDiv.innerHTML = `
+                    <span class="word-text">${word.text}</span>
+                    <span class="word-time">${word.start.toFixed(2)}s - ${word.end.toFixed(2)}s</span>
+                `;
+                wordDiv.onclick = function() {
+                    seekTo(word.start);
+                };
+                container.appendChild(wordDiv);
+            });
+        }
+
+        function populatePhonemeAlignment(fileKey) {
+            const data = alignmentData[fileKey];
+            const container = document.getElementById('phoneme-alignment');
+            container.innerHTML = '';
+            
+            data.phonemes.forEach((phoneme) => {
+                const phoneDiv = document.createElement('div');
+                phoneDiv.className = 'phoneme-item';
+                phoneDiv.setAttribute('data-start', phoneme.start);
+                phoneDiv.setAttribute('data-end', phoneme.end);
+                phoneDiv.textContent = `${phoneme.phone} (${phoneme.start.toFixed(2)}s)`;
+                phoneDiv.onclick = function() {
+                    seekTo(phoneme.start);
+                };
+                container.appendChild(phoneDiv);
+            });
+        }
+
+        function populateTranscript(fileKey) {
+            const data = alignmentData[fileKey];
+            document.getElementById('transcript-text').textContent = data.transcript;
+        }
+
+        function playPause() {
+            if (isPlaying) {
+                wavesurfer.pause();
+                isPlaying = false;
+                document.getElementById('play-btn').innerHTML = '▶️ Play';
+            } else {
+                wavesurfer.play();
+                isPlaying = true;
+                document.getElementById('play-btn').innerHTML = '⏸️ Pause';
+            }
+        }
+
+        function stop() {
+            wavesurfer.stop();
+            isPlaying = false;
+            document.getElementById('play-btn').innerHTML = '▶️ Play';
+            clearWordHighlights();
+        }
+
+        function skipBackward() {
+            const currentTime = wavesurfer.getCurrentTime();
+            wavesurfer.seekTo(Math.max(0, currentTime - 2) / wavesurfer.getDuration());
+        }
+
+        function skipForward() {
+            const currentTime = wavesurfer.getCurrentTime();
+            const duration = wavesurfer.getDuration();
+            wavesurfer.seekTo(Math.min(duration, currentTime + 2) / duration);
+        }
+
+        function seekTo(time) {
+            const duration = wavesurfer.getDuration();
+            wavesurfer.seekTo(time / duration);
+            if (!isPlaying) {
+                playPause();
+            }
+        }
+
+        function setSpeed(speed) {
+            wavesurfer.setPlaybackRate(speed);
+            document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function updateTimeDisplay() {
+            const currentTime = wavesurfer.getCurrentTime();
+            document.getElementById('current-time').textContent = formatTime(currentTime);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function highlightCurrentWord() {
+            const currentTime = wavesurfer.getCurrentTime();
+            const data = alignmentData[currentFile];
+            
+            document.querySelectorAll('.word-item').forEach(item => {
+                const start = parseFloat(item.getAttribute('data-start'));
+                const end = parseFloat(item.getAttribute('data-end'));
+                
+                if (currentTime >= start && currentTime <= end) {
+                    item.classList.add('playing');
+                } else {
+                    item.classList.remove('playing');
+                }
+            });
+            
+            document.querySelectorAll('.phoneme-item').forEach(item => {
+                const start = parseFloat(item.getAttribute('data-start'));
+                const end = parseFloat(item.getAttribute('data-end'));
+                
+                if (currentTime >= start && currentTime <= end) {
+                    item.classList.add('playing');
+                } else {
+                    item.classList.remove('playing');
+                }
+            });
+        }
+
+        function clearWordHighlights() {
+            document.querySelectorAll('.word-item, .phoneme-item').forEach(item => {
+                item.classList.remove('playing');
+            });
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initWaveSurfer();
+        });
+    </script>
+</body>
+</html>
