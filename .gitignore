@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# MFA temp files
+*.log
+*.tmp
+.DS_Store
+
+# Large model files (already available via MFA)
+*.zip
+*.tar.gz
+
+# OS files
+Thumbs.db
+desktop.ini
